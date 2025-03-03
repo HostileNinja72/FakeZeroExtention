@@ -1,0 +1,33 @@
+{
+    "manifest_version": 3,
+    "name": "Fake News Detector",
+    "version": "1.0",
+    "description": "Detects and flags fake news on social media.",
+    "permissions": [
+        "storage",
+        "activeTab",
+        "scripting"
+    ],
+    "host_permissions": [
+        "https://*.facebook.com/*",
+        "https://*.instagram.com/*"
+    ],
+    "background": {
+        "service_worker": "background.js"
+    },
+    "content_scripts": [
+        {
+            "matches": [
+                "https://*.facebook.com/*",
+                "https://*.instagram.com/*"
+            ],
+            "js": [
+                "content.js"
+            ]
+        }
+    ],
+    "action": {
+        "default_popup": "popup.html",
+        "default_icon": "icon.png"
+    }
+}
