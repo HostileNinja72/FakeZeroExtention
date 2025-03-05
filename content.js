@@ -23,8 +23,9 @@ class FakeNewsDetector {
                 adMarker: '',
                 content: ''
             },
+            isFacebook: false,
             isInstagram: false,
-            isFacebook: false
+            isTwitter: false
         };
 
         if (hostname.includes('facebook.com')) {
@@ -41,9 +42,16 @@ class FakeNewsDetector {
                 content: 'div._a9zs'
             };
             config.isInstagram = true;
+        } else if (hostname.includes('twitter.com') || hostname.includes('x.com')) {
+            config.selectors = {
+                post: 'article[data-testid="tweet"]',
+                adMarker: 'div[data-testid="badge"]',
+                content: 'div[data-testid="tweetText"]'
+            };
+            config.isTwitter = true;
         }
 
-        console.log(`Detected platform: ${config.isFacebook ? 'Facebook' : 'Instagram'}`);
+        console.log(`Detected platform: ${config.isFacebook ? 'Facebook' : config.isInstagram ? 'Instagram' : config.isTwitter ? 'Twitter' : 'Unknown'}`);
         return config;
     }
 
@@ -111,7 +119,7 @@ class FakeNewsDetector {
         const posts = [];
         mutation.addedNodes.forEach(node => {
             if (node.nodeType === Node.ELEMENT_NODE) {
-                // Platform-specific node detection
+                
                 if (this.platformConfig.isFacebook) {
                     const fbPost = node.matches(this.platformConfig.selectors.post)
                         ? node
@@ -120,6 +128,9 @@ class FakeNewsDetector {
                 } else if (this.platformConfig.isInstagram) {
                     const igPost = node.closest(this.platformConfig.selectors.post);
                     if (igPost) posts.push(igPost);
+                } else if (this.platformConfig.isTwitter) {
+                    const twitterPost = node.closest(this.platformConfig.selectors.post);
+                    if (twitterPost) posts.push(twitterPost);
                 }
             }
         });
@@ -144,24 +155,28 @@ class FakeNewsDetector {
     }
 
     extractFullTextFromPost(postElement) {
-        let extractedText = new Set(); // Use a Set to avoid duplicate lines
+        let extractedText = new Set(); 
+        let textElements;
+        if (this.platformConfig.isTwitter) {
 
-        // Select all elements inside the post
-        const elements = postElement.querySelectorAll('*');
+            textElements = postElement.querySelectorAll(this.platformConfig.selectors.content);
+        } else {
+            
+            textElements = postElement.querySelectorAll('*');
+        }
 
-        elements.forEach(element => {
-            // Exclude images and interactive elements like buttons
+        textElements.forEach(element => {
+        
             if (element.tagName.toLowerCase() !== 'img' && element.getAttribute('role') !== 'button') {
                 const textContent = element.textContent.trim();
                 if (textContent && !extractedText.has(textContent)) {
-                    extractedText.add(textContent); // Store only unique text
+                    extractedText.add(textContent); 
                 }
             }
         });
 
-        return Array.from(extractedText).join("\n"); // Convert Set back to a string
+        return Array.from(extractedText).join("\n");
     }
-
 
     async processPost(post) {
         if (this.processedPosts.has(post)) return;
@@ -172,35 +187,68 @@ class FakeNewsDetector {
             console.log('[FakeZero] Extracted post content:\n', content);
         }
 
-        if (content && content.length > 100) {
-            const isAd = this.isAdPost(post);
-            if (!isAd) {
-                const isFake = await this.checkFakeNews(content);
-                if (isFake) this.addWarningIcon(post);
-            }
-        }
+        // if (content && content.length > 100) {
+        //     const isAd = this.isAdPost(post);
+        //     if (!isAd) {
+        //         const isFake = await this.checkFakeNews(content);
+        //         if (isFake) this.addWarningIcon(post);
+        //     }
+        // }
+
+        this.addWarningIcon(post);
+        this.processedPosts.add(post);
+
+       
+        await chrome.storage.local.get('fakeNewsCount', (result) => {
+            const newCount = (result.fakeNewsCount || 0) + 1;
+            chrome.storage.local.set({ fakeNewsCount: newCount });
+        });
 
         this.processedPosts.add(post);
     }
 
-
     addWarningIcon(post) {
+        let container;
+        if (this.platformConfig.isFacebook) {
+            container = post.closest('.xdj266r.x11i5rnm.xat24cr.x1mh8g0r.x18d9i69.x1cy8zhl.x78zum5.x1q0g3np.xod5an3.xz9dl7a.x1ye3gou.xn6708d');
+        } else if (this.platformConfig.isInstagram) {
+            container = post;
+        } else if (this.platformConfig.isTwitter) {
+            container = post;
+        }
+
+        if (!container) {
+            container = post;
+        }
+
+       
+        if (getComputedStyle(container).position === 'static') {
+            container.style.position = 'relative';
+        }
+
+      
+        const iconContainer = document.createElement('div');
+        iconContainer.className = 'fakezero-warning-container';
+
+       
         const icon = document.createElement('div');
         icon.className = 'fakezero-warning-icon';
 
-        if (this.platformConfig.isFacebook) {
-            icon.style.top = '10px';
-            icon.style.right = '10px';
-        } else if (this.platformConfig.isInstagram) {
-            icon.style.top = '15px';
-            icon.style.right = '15px';
-        }
+        
+        const tooltip = document.createElement('div');
+        tooltip.className = 'fakezero-tooltip';
+        tooltip.innerHTML = `
+            <h4>Fake News Detected</h4>
+            <p>Potential misinformation detected in this post.</p>
+        `;
 
-        post.style.position = 'relative';
-        post.appendChild(icon);
+        
+        iconContainer.appendChild(icon);
+        iconContainer.appendChild(tooltip);
+
+        
+        container.appendChild(iconContainer);
     }
-
-    
 
     handleExtensionStateUpdate(request) {
         console.log('Handling extension state update:', request.isActive);
@@ -221,8 +269,7 @@ class FakeNewsDetector {
     }
 
     async checkFakeNews(content) {
-        // Existing fake news checking logic
-        // Return boolean
+       
     }
 }
 

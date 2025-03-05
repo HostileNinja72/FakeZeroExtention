@@ -4,6 +4,7 @@ class FakeZeroPopup {
         this.initializeElements();
         this.initializeState();
         this.setupEventListeners();
+        this.setupStorageListener();
     }
 
     initializeElements() {
@@ -13,6 +14,16 @@ class FakeZeroPopup {
             fakeNewsCounter: document.getElementById('fakeNewsCounter'),
             statusIndicator: document.getElementById('statusIndicator')
         };
+    }
+
+    setupStorageListener() {
+        chrome.storage.onChanged.addListener((changes) => {
+            if (changes.fakeNewsCount) {
+                this.state.fakeNewsCount = changes.fakeNewsCount.newValue;
+                this.updateUI();
+                console.log('[FakeZero] Counter updated from storage');
+            }
+        });
     }
 
     async initializeState() {
