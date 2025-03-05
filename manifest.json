@@ -6,7 +6,9 @@
     "permissions": [
         "storage",
         "activeTab",
-        "scripting"
+        "scripting",
+        "messaging",
+        "tabs"
     ],
     "host_permissions": [
         "https://*.facebook.com/*",

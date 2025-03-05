@@ -208,47 +208,56 @@ class FakeNewsDetector {
     }
 
     addWarningIcon(post) {
-        let container;
-        if (this.platformConfig.isFacebook) {
-            container = post.closest('.xdj266r.x11i5rnm.xat24cr.x1mh8g0r.x18d9i69.x1cy8zhl.x78zum5.x1q0g3np.xod5an3.xz9dl7a.x1ye3gou.xn6708d');
-        } else if (this.platformConfig.isInstagram) {
-            container = post;
-        } else if (this.platformConfig.isTwitter) {
-            container = post;
-        }
+        try {
+            const icon = document.createElement('div');
+            icon.id = 'debug-warning-icon';
+            icon.style.width = '30px';
+            icon.style.height = '30px';
+            icon.style.backgroundColor = 'red';
+            icon.style.position = 'absolute';
+            icon.style.zIndex = '9999';
 
-        if (!container) {
-            container = post;
-        }
+            icon.style.top = '0px';
+            icon.style.right = '10px';
 
-       
-        if (getComputedStyle(container).position === 'static') {
-            container.style.position = 'relative';
-        }
+            icon.style.cursor = 'pointer';
+            icon.style.boxShadow = '0 2px 5px rgba(0,0,0,0.3)';
 
-      
-        const iconContainer = document.createElement('div');
-        iconContainer.className = 'fakezero-warning-container';
+            icon.innerText = '!';
+            icon.style.color = 'white';
+            icon.style.display = 'flex';
+            icon.style.alignItems = 'center';
+            icon.style.justifyContent = 'center';
+            icon.style.fontWeight = 'bold';
 
-       
-        const icon = document.createElement('div');
-        icon.className = 'fakezero-warning-icon';
+            // Add click event to open the extension popup
+            icon.addEventListener('click', (event) => {
+                event.stopPropagation(); 
+                try {
+                    // Send a message to the background script to open the extension popup
+                    chrome.runtime.sendMessage({ action: 'openPopup' });
+
+                    
+                    icon.style.transform = 'scale(1.1)';
+                    setTimeout(() => {
+                        icon.style.transform = 'scale(1)';
+                    }, 200);
+                } catch (error) {
+                    console.error('Error opening extension:', error);
+                }
+            });
+
+          
+            post.style.position = 'relative';
 
         
-        const tooltip = document.createElement('div');
-        tooltip.className = 'fakezero-tooltip';
-        tooltip.innerHTML = `
-            <h4>Fake News Detected</h4>
-            <p>Potential misinformation detected in this post.</p>
-        `;
-
-        
-        iconContainer.appendChild(icon);
-        iconContainer.appendChild(tooltip);
-
-        
-        container.appendChild(iconContainer);
+            post.appendChild(icon);
+            console.log('Clickable warning icon added successfully');
+        } catch (error) {
+            console.error('Error adding warning icon:', error);
+        }
     }
+
 
     handleExtensionStateUpdate(request) {
         console.log('Handling extension state update:', request.isActive);

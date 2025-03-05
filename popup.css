@@ -157,36 +157,20 @@
     }
 }
 
-.fake-news-warning-container {
-    position: absolute;
-    top: -10px;
-    right: -10px;
-    width: 16px;
-    height: 16px;
-}
-
-.fake-news-warning-icon {
-    width: 12px;
-    height: 12px;
+.fakezero-warning-icon {
+    width: 24px;
+    height: 24px;
     background-color: red;
-    border-radius: 50%;
-    box-shadow: 0 0 8px red;
-    cursor: pointer;
-}
-
-.fake-news-tooltip {
-    display: none;
+    /* Placeholder icon - replace with your actual icon */
     position: absolute;
-    background: white;
-    color: black;
-    padding: 5px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    top: 20px;
-    left: -20px;
-    white-space: nowrap;
+    top: 10px;
+    right: 10px;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+    z-index: 1000;
+    /* High z-index to ensure visibility */
 }
 
-.fake-news-warning-icon:hover+.fake-news-tooltip {
-    display: block;
+.fakezero-warning-icon:hover {
+    transform: scale(1.1);
 }
