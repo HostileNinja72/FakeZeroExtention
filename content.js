@@ -53,6 +53,19 @@ class FakeNewsDetector {
         console.log('Extension state loaded:', this.extensionEnabled);
     }
 
+    teardownObservers() {
+        if (this.intersectionObserver) {
+            this.intersectionObserver.disconnect();
+            this.intersectionObserver = null;
+        }
+        if (this.mutationObserver) {
+            this.mutationObserver.disconnect();
+            this.mutationObserver = null;
+        }
+        this.processedPosts = new WeakSet();
+        console.log('Observers torn down');
+    }
+
     setupObservers() {
         console.log('Setting up observers...');
         this.intersectionObserver = new IntersectionObserver((entries) => {
@@ -77,14 +90,18 @@ class FakeNewsDetector {
     }
 
     handleMutation(mutation) {
-        const posts = this.getPostsFromMutation(mutation);
-        if (!posts) {
-            console.error('getPostsFromMutation returned undefined or null');
+        if (!this.extensionEnabled) {
             return;
         }
+
+        const posts = this.getPostsFromMutation(mutation);
+        if (!posts) {
+            console.error('[FakeZero] getPostsFromMutation returned undefined or null');
+            return;
+        }
+
         posts.forEach(post => {
             if (!this.processedPosts.has(post)) {
-                console.log('Observing new post:', post);
                 this.intersectionObserver.observe(post);
             }
         });
@@ -119,9 +136,6 @@ class FakeNewsDetector {
         chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             console.log('Message received:', request);
             switch (request.type) {
-                case 'FORCE_RESCAN':
-                    this.handleForceRescan(request, sendResponse);
-                    return true;
                 case 'EXTENSION_STATE_UPDATE':
                     this.handleExtensionStateUpdate(request);
                     break;
@@ -129,20 +143,33 @@ class FakeNewsDetector {
         });
     }
 
+    extractFullTextFromPost(postElement) {
+        let extractedText = new Set(); // Use a Set to avoid duplicate lines
+
+        // Select all elements inside the post
+        const elements = postElement.querySelectorAll('*');
+
+        elements.forEach(element => {
+            // Exclude images and interactive elements like buttons
+            if (element.tagName.toLowerCase() !== 'img' && element.getAttribute('role') !== 'button') {
+                const textContent = element.textContent.trim();
+                if (textContent && !extractedText.has(textContent)) {
+                    extractedText.add(textContent); // Store only unique text
+                }
+            }
+        });
+
+        return Array.from(extractedText).join("\n"); // Convert Set back to a string
+    }
+
+
     async processPost(post) {
         if (this.processedPosts.has(post)) return;
 
-        let content = '';
-        if (this.platformConfig.isFacebook) {
-            content = post.querySelector(this.platformConfig.selectors.content)?.innerText;
-            console.log("extract content: ", content);
-        } else if (this.platformConfig.isInstagram) {
-            content = post.querySelector(this.platformConfig.selectors.content)?.innerText;
-        }
+        let content = this.extractFullTextFromPost(post);
 
-        
         if (content) {
-            console.log('Extracted post content:', content);
+            console.log('[FakeZero] Extracted post content:\n', content);
         }
 
         if (content && content.length > 100) {
@@ -156,14 +183,6 @@ class FakeNewsDetector {
         this.processedPosts.add(post);
     }
 
-    isAdPost(post) {
-        if (this.platformConfig.isFacebook) {
-            return !!post.closest(this.platformConfig.selectors.adMarker);
-        } else if (this.platformConfig.isInstagram) {
-            return !!post.querySelector(this.platformConfig.selectors.adMarker);
-        }
-        return false;
-    }
 
     addWarningIcon(post) {
         const icon = document.createElement('div');
@@ -181,25 +200,29 @@ class FakeNewsDetector {
         post.appendChild(icon);
     }
 
-    async handleForceRescan(request, sendResponse) {
-        console.log('Handling force rescan...');
-        try {
-            const newDetections = await this.rescanPage();
-            console.log('Rescan completed, new detections:', newDetections);
-            sendResponse({ success: true, newDetections: newDetections });
-        } catch (error) {
-            console.error('Rescan failed:', error);
-            sendResponse({ success: false });
-        }
-    }
+    
 
     handleExtensionStateUpdate(request) {
         console.log('Handling extension state update:', request.isActive);
         this.extensionEnabled = request.isActive;
-        if (!this.extensionEnabled) {
+        if (this.extensionEnabled) {
+            console.log('Enabling extension, initializing...');
+            this.setupObservers();
+            this.scanInitialPosts();
+        } else {
             console.log('Disabling extension, removing all icons...');
+            this.teardownObservers();
             this.removeAllIcons();
         }
+    }
+
+    removeAllIcons() {
+        document.querySelectorAll('.fakezero-warning-icon').forEach(icon => icon.remove());
+    }
+
+    async checkFakeNews(content) {
+        // Existing fake news checking logic
+        // Return boolean
     }
 }
 

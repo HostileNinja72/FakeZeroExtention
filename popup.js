@@ -9,7 +9,6 @@ class FakeZeroPopup {
     initializeElements() {
         console.debug('[FakeZero] Initializing UI elements');
         this.elements = {
-            checkNowBtn: document.getElementById('checkNow'),
             toggleExtensionBtn: document.getElementById('toggleExtension'),
             fakeNewsCounter: document.getElementById('fakeNewsCounter'),
             statusIndicator: document.getElementById('statusIndicator')
@@ -33,51 +32,10 @@ class FakeZeroPopup {
 
     setupEventListeners() {
         console.debug('[FakeZero] Setting up event listeners');
-        this.elements.checkNowBtn.addEventListener('click', () => this.handleCheckNow());
         this.elements.toggleExtensionBtn.addEventListener('click', () => this.toggleExtension());
     }
 
-    async handleCheckNow() {
-        console.log('[FakeZero] Check Now button clicked');
-        if (!this.state.isActive) {
-            console.warn('[FakeZero] Extension paused - aborting check');
-            this.updateStatus('Extension is paused', 'error');
-            return;
-        }
-
-        try {
-            console.debug('[FakeZero] Querying active tab');
-            const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-
-            if (!tab) {
-                console.error('[FakeZero] No active tab found');
-                return;
-            }
-
-            console.log(`[FakeZero] Starting scan on tab: ${tab.url}`);
-            this.updateStatus('Scanning page...', 'processing');
-            this.toggleButtonState(true);
-
-            console.debug('[FakeZero] Ensuring content script is injected');
-            await this.ensureContentScriptInjected(tab.id);
-
-            console.debug('[FakeZero] Sending FORCE_RESCAN message');
-            const response = await chrome.tabs.sendMessage(tab.id, {
-                type: 'FORCE_RESCAN',
-                force: true
-            });
-
-            console.log('[FakeZero] Received scan response:', response);
-            this.handleScanResponse(response);
-        } catch (error) {
-            console.error('[FakeZero] Scan failed:', error);
-            this.handleScanError(error);
-        } finally {
-            console.debug('[FakeZero] Resetting button state');
-            this.toggleButtonState(false);
-        }
-    }
-
+    
     async ensureContentScriptInjected(tabId) {
         try {
             console.debug(`[FakeZero] Injecting content script into tab ${tabId}`);
@@ -90,13 +48,6 @@ class FakeZeroPopup {
         }
     }
 
-    toggleButtonState(isLoading) {
-        console.debug(`[FakeZero] Setting button loading state: ${isLoading}`);
-        this.elements.checkNowBtn.disabled = isLoading;
-        this.elements.checkNowBtn.innerHTML = isLoading
-            ? '<div class="spinner"></div> Scanning...'
-            : 'Check Now';
-    }
 
     handleScanResponse(response) {
         if (response?.success) {
@@ -122,12 +73,16 @@ class FakeZeroPopup {
 
     async toggleExtension() {
         const newState = !this.state.isActive;
-        console.log(`[FakeZero] Toggling extension state from ${this.state.isActive} to ${newState}`);
         this.state.isActive = newState;
         await chrome.storage.local.set({ isActive: this.state.isActive });
-        console.log('[FakeZero] New state saved to storage');
         this.updateUI();
         this.sendStateToContentScripts();
+
+        // Force content script re-injection when activating
+        if (newState) {
+            const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+            if (tab) await this.ensureContentScriptInjected(tab.id);
+        }
     }
 
     updateUI() {
