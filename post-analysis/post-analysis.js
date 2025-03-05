@@ -1,0 +1,53 @@
+class FakeZeroPostAnalysis {
+    constructor() {
+        console.debug('[FakeZero] Initializing post analysis listener');
+        this.initializeElements();
+        this.setupMessageListener();
+        this.setupCloseButton();
+    }
+
+    initializeElements() {
+        console.debug('[FakeZero] Initializing UI elements');
+        this.elements = {
+            postContent: document.getElementById('post-content'),
+            platform: document.getElementById('platform'),
+            sentimentScore: document.getElementById('sentiment-score'),
+            sourcesCheck: document.getElementById('sources-check'),
+            closeBtn: document.querySelector('.close-btn')
+        };
+    }
+
+    setupMessageListener() {
+        console.debug('[FakeZero] Setting up message listener');
+
+        window.addEventListener('message', (event) => {
+            if (!event.data || event.data.type !== 'POST_DATA') {
+                return;
+            }
+
+            console.debug('[FakeZero] Received post data:', event.data);
+
+            // Update DOM elements
+            this.elements.postContent.textContent = event.data.content || 'No content available';
+            this.elements.platform.textContent = event.data.platform || 'Unknown platform';
+
+            // Placeholder analysis updates
+            this.elements.sentimentScore.textContent = 'Analysis pending...';
+            this.elements.sourcesCheck.innerHTML = '<li>Source verification in progress</li>';
+        });
+    }
+
+    setupCloseButton() {
+        console.debug('[FakeZero] Setting up close button');
+
+        this.elements.closeBtn.addEventListener('click', () => {
+            console.debug('[FakeZero] Closing post analysis popup');
+            window.parent.postMessage({ type: 'CLOSE_MODAL' }, '*');
+        });
+    }
+}
+
+console.log('[FakeZero] Initializing post-analysis script');
+document.addEventListener('DOMContentLoaded', () => {
+    new FakeZeroPostAnalysis();
+});
