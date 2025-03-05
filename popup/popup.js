@@ -106,7 +106,7 @@ class FakeZeroPopup {
 
         this.elements.toggleExtensionBtn.setAttribute('aria-pressed', this.state.isActive);
         this.elements.toggleExtensionBtn.querySelector('.toggle-state').textContent =
-            this.state.isActive ? 'Active' : 'Inactive';
+            this.state.isActive ? 'Inactive' : 'Active';
 
         this.elements.statusIndicator.style.backgroundColor = this.state.isActive ? '#4CAF50' : '#FF5722';
     }

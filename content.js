@@ -231,13 +231,14 @@ class FakeNewsDetector {
             icon.style.fontWeight = 'bold';
 
             // Add click event to open the extension popup
+            // content.js (inside addWarningIcon)
             icon.addEventListener('click', (event) => {
-                event.stopPropagation(); 
+                event.stopPropagation();
                 try {
-                    // Send a message to the background script to open the extension popup
-                    chrome.runtime.sendMessage({ action: 'openPopup' });
+                    // Instruct the background script to switch to post-analysis.html
+                    chrome.runtime.sendMessage({ action: 'openAnalysisPopup' });
 
-                    
+                    // Tiny animation
                     icon.style.transform = 'scale(1.1)';
                     setTimeout(() => {
                         icon.style.transform = 'scale(1)';
@@ -246,6 +247,7 @@ class FakeNewsDetector {
                     console.error('Error opening extension:', error);
                 }
             });
+
 
           
             post.style.position = 'relative';
