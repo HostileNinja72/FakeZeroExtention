@@ -187,42 +187,45 @@ class FakeNewsDetector {
 
     async processPost(post, force = false) {
         if (!this.extensionEnabled) return;
-        if (this.processedPosts.has(post) && !force) return;
-
+    
         let content = this.extractFullTextFromPost(post);
-        if (content) {
-            console.log('[FakeZero] Extracted post content:\n', content);
-            chrome.storage.local.get('fakeNewsCount', (result) => {
-                this.fakeNewsCount = (result.fakeNewsCount || 0) + 1;
-                chrome.storage.local.set({ fakeNewsCount: this.fakeNewsCount });
-                console.log(`Fake news detected count: ${this.fakeNewsCount}`);
-            });
-        }
-
+        if (!content) return;
+    
+        console.log('[FakeZero] Extracted post content:\n', content);
+    
+        // Get stored processed posts and count
+        chrome.storage.local.get(['processedPosts', 'fakeNewsCount'], (result) => {
+            let processedPosts = result.processedPosts || {}; // Store processed posts as an object
+            let fakeNewsCount = result.fakeNewsCount || 0;
+    
+            // Check if this post has already been counted
+            if (!processedPosts[content]) { 
+                // If post is new, increase count
+                fakeNewsCount += 1;
+                processedPosts[content] = true; // Mark post as processed
+    
+                chrome.storage.local.set({ fakeNewsCount, processedPosts }, () => {
+                    console.log(`Updated Fake News Count: ${fakeNewsCount}`);
+                });
+            } else {
+                console.log('This post has already been processed, skipping...');
+            }
+        });
+    
         this.addWarningIcon(post);
         this.processedPosts.add(post);
     }
-
-    // async processPost(post, force = false) {
-    //     if (!this.extensionEnabled) return;
-    //     if (this.processedPosts.has(post) && !force) return;
-
-    //     let content = this.extractFullTextFromPost(post);
-    //     if (content) {
-    //         console.log('[FakeZero] Extracted post content:\n', content);
-    //     }
-
-    //     this.addWarningIcon(post);
-    //     this.processedPosts.add(post);
-    // }
     
 
     addWarningIcon(post) {
         try {
-            // Prevent duplicate icons
-            if (post.querySelector('.fakezero-warning-container')) return;
+            // Prevent duplicate warnings
+            if (post.querySelector('.fakezero-warning-container')) {
+                console.log('Warning already added to this post, skipping...');
+                return; // Exit function if warning exists
+            }
     
-            // Create warning container (separate from text)
+            // Create warning container
             const warningContainer = document.createElement('div');
             warningContainer.classList.add('fakezero-warning-container');
     
@@ -273,16 +276,17 @@ class FakeNewsDetector {
             warningContainer.appendChild(icon);
             warningContainer.appendChild(warningText);
     
-            // Insert warning after the post (separating it from text)
-            post.parentNode.insertBefore(warningContainer, post.nextSibling);
+            // Insert warning after the post
+            post.appendChild(warningContainer);
     
-            console.log('Warning icon added below post, separate from text.');
+            console.log('Warning icon added below post.');
+    
+            // Handle click event to open analysis
             icon.addEventListener('click', (event) => {
                 event.stopPropagation();
                 try {
-                    // Instruct the background script to switch to post-analysis.html
                     chrome.runtime.sendMessage({ action: 'openAnalysisPopup' });
-
+    
                     // Tiny animation
                     icon.style.transform = 'scale(1.1)';
                     setTimeout(() => {
@@ -292,12 +296,12 @@ class FakeNewsDetector {
                     console.error('Error opening extension:', error);
                 }
             });
-
-            
+    
         } catch (error) {
             console.error('Error adding warning icon:', error);
         }
     }
+    
 
 
 

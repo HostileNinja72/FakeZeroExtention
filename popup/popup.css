@@ -43,7 +43,7 @@
     width: 14px;
     height: 14px;
     /* border-radius: 50%; */
-    background: #4CAF50;
+    background: #EA3B15;
     box-shadow: 0 0 10px rgba(76, 175, 80, 0.4);
 }
 
@@ -141,3 +141,76 @@
     font-size: 0.8rem;
 }
 
+/* Counter Card */
+.counter-card {
+    background: var(--light-bg);
+    /* border-radius: 10px; */
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    text-align: center;
+    box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.05);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+/* Fake News Count (Centered) */
+.counter-value {
+    font-size: 2.4rem;
+    font-weight: 700;
+    color: var(--primary-red);
+    margin-bottom: 10px;
+}
+
+/* Reset Button Container (Align Bottom-Right) */
+.reset-container {
+    width: 100%;
+    display: flex;
+    justify-content: flex-end;
+    padding-top: 5px;
+}
+
+/* Reset Button (Now on the Bottom Right) */
+.reset-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: auto;
+    padding: 6px 14px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: white;
+    background: #EA3B15;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    box-shadow: 0px 3px 8px rgba(255, 59, 48, 0.3);
+    outline: none;
+    gap: 6px;
+}
+
+/* Reset Button Hover & Active */
+.reset-button:hover {
+    background: #D32F2F;
+    transform: translateY(-1px);
+    box-shadow: 0px 5px 12px rgba(211, 47, 47, 0.4);
+}
+
+.reset-button:active {
+    transform: scale(0.96);
+    box-shadow: 0px 3px 6px rgba(255, 59, 48, 0.2);
+}
+
+/* Reset Icon */
+.reset-icon {
+    width: 14px;
+    height: 14px;
+    transition: transform 0.3s ease;
+}
+
+.reset-button:hover .reset-icon {
+    transform: rotate(180deg);
+}

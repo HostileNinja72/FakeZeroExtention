@@ -42,8 +42,29 @@ class FakeZeroPopup {
 
     setupEventListeners() {
         this.elements.toggleSwitch.addEventListener('change', () => this.toggleExtension());
+        
+        // Add event listener for reset button
+        document.getElementById('resetCounterBtn').addEventListener('click', () => this.resetCounter());
     }
-
+    
+    async resetCounter() {
+        console.log('[FakeZero] Resetting fake news counter...');
+        
+        // Add animation effect on click
+        const button = document.getElementById('resetCounterBtn');
+        button.style.transform = 'scale(0.9)';
+        setTimeout(() => button.style.transform = 'scale(1)', 150);
+        
+        // Reset the counter
+        await chrome.storage.local.set({ fakeNewsCount: 0 });
+        
+        // Update the UI immediately
+        this.state.fakeNewsCount = 0;
+        this.updateUI();
+    }
+    
+    
+    
     
     async ensureContentScriptInjected(tabId) {
         try {
@@ -96,7 +117,7 @@ class FakeZeroPopup {
 
     updateUI() {
         this.elements.toggleSwitch.checked = this.state.isActive;
-        this.elements.statusIndicator.style.backgroundColor = this.state.isActive ? '#4CAF50' : '#FF5722';
+        this.elements.statusIndicator.style.backgroundColor = this.state.isActive ? '#FF5722' : '#a8a8a8';
         this.elements.fakeNewsCounter.textContent = `${this.state.fakeNewsCount}`; // 🔥 Updates count display
     }
     
