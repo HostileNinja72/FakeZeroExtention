@@ -51,3 +51,8 @@ console.log('[FakeZero] Initializing post-analysis script');
 document.addEventListener('DOMContentLoaded', () => {
     new FakeZeroPostAnalysis();
 });
+
+updateCredibility(status) {
+    this.elements.credibilityStatus.textContent = status;
+    this.elements.credibilityStatus.classList.remove('checking-animation'); // Stop animation when done
+}

@@ -1,14 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FakeZero - Fake News Detector</title>
+    <title>FakeZero - Misinformation Detector</title>
     <link rel="stylesheet" href="popup.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;900&display=swap" rel="stylesheet">
 </head>
-
 <body>
     <div class="popup-container">
         <header class="popup-header">
@@ -18,18 +16,21 @@
 
         <main class="popup-content">
             <div class="counter-card">
-                <p class="counter-label">Potential fake news detected:</p>
+                <p class="counter-label">Detected Fake News:</p>
                 <div class="counter-value" id="fakeNewsCounter">0</div>
             </div>
 
-            <div class="action-buttons">
-                <button id="toggleExtension" class="btn-toggle" aria-pressed="true">
-                    <span class="toggle-state">Active</span>
-                </button>
+            <!-- Modern Toggle Switch -->
+            <div class="toggle-wrapper">
+                <p class="toggle-label">Detection Mode</p>
+                <input type="checkbox" id="toggleSwitch" class="toggle-checkbox">
+                <label for="toggleSwitch" class="toggle-label-switch">
+                    <span class="toggle-slider"></span>
+                </label>
             </div>
 
-            <aside class="info-box" aria-label="Extension information">
-                <p>AI-powered detection system specialized in identifying misinformation across social platforms.</p>
+            <aside class="info-box">
+                <p>AI-powered detection system analyzing social media for misinformation.</p>
             </aside>
         </main>
 
@@ -40,5 +41,4 @@
 
     <script src="popup.js" type="module"></script>
 </body>
-
 </html>

@@ -3,16 +3,20 @@ class FakeNewsDetector {
         this.observer = null;
         this.extensionEnabled = true;
         this.processedPosts = new WeakSet();
+        this.fakeNewsCount = 0; // 🔥 Counter for detected fake news
         this.platformConfig = this.detectPlatform();
         this.initialize();
     }
+
 
     async initialize() {
         console.log('Initializing detector...');
         await this.loadExtensionState();
         this.setupObservers();
         this.setupMessageListener();
-        this.scanInitialPosts();
+        if (this.extensionEnabled) {
+            this.scanInitialPosts(); // 🔥 Ensures warnings appear when activated
+        }
     }
 
     detectPlatform() {
@@ -138,21 +142,24 @@ class FakeNewsDetector {
     }
 
     scanInitialPosts() {
+        console.log('Scanning initial posts for warnings...');
         const posts = document.querySelectorAll(this.platformConfig.selectors.post);
-        posts.forEach(post => this.intersectionObserver.observe(post));
+        posts.forEach(post => {
+            this.processPost(post, true); // 🔥 Force reprocessing and restore warnings
+        });
     }
+
 
     setupMessageListener() {
         console.log('Setting up message listener...');
         chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-            console.log('Message received:', request);
-            switch (request.type) {
-                case 'EXTENSION_STATE_UPDATE':
-                    this.handleExtensionStateUpdate(request);
-                    break;
+            if (request.type === 'EXTENSION_STATE_UPDATE') {
+                this.handleExtensionStateUpdate(request);
             }
         });
     }
+
+
 
     extractFullTextFromPost(postElement) {
         let extractedText = new Set(); 
@@ -178,60 +185,98 @@ class FakeNewsDetector {
         return Array.from(extractedText).join("\n");
     }
 
-    async processPost(post) {
-        if (this.processedPosts.has(post)) return;
+    async processPost(post, force = false) {
+        if (!this.extensionEnabled) return;
+        if (this.processedPosts.has(post) && !force) return;
 
         let content = this.extractFullTextFromPost(post);
-
         if (content) {
             console.log('[FakeZero] Extracted post content:\n', content);
+            chrome.storage.local.get('fakeNewsCount', (result) => {
+                this.fakeNewsCount = (result.fakeNewsCount || 0) + 1;
+                chrome.storage.local.set({ fakeNewsCount: this.fakeNewsCount });
+                console.log(`Fake news detected count: ${this.fakeNewsCount}`);
+            });
         }
-
-        // if (content && content.length > 100) {
-        //     const isAd = this.isAdPost(post);
-        //     if (!isAd) {
-        //         const isFake = await this.checkFakeNews(content);
-        //         if (isFake) this.addWarningIcon(post);
-        //     }
-        // }
 
         this.addWarningIcon(post);
         this.processedPosts.add(post);
-
-       
-        await chrome.storage.local.get('fakeNewsCount', (result) => {
-            const newCount = (result.fakeNewsCount || 0) + 1;
-            chrome.storage.local.set({ fakeNewsCount: newCount });
-        });
-
-        this.processedPosts.add(post);
     }
+
+    // async processPost(post, force = false) {
+    //     if (!this.extensionEnabled) return;
+    //     if (this.processedPosts.has(post) && !force) return;
+
+    //     let content = this.extractFullTextFromPost(post);
+    //     if (content) {
+    //         console.log('[FakeZero] Extracted post content:\n', content);
+    //     }
+
+    //     this.addWarningIcon(post);
+    //     this.processedPosts.add(post);
+    // }
+    
 
     addWarningIcon(post) {
         try {
+            // Prevent duplicate icons
+            if (post.querySelector('.fakezero-warning-container')) return;
+    
+            // Create warning container (separate from text)
+            const warningContainer = document.createElement('div');
+            warningContainer.classList.add('fakezero-warning-container');
+    
+            Object.assign(warningContainer.style, {
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                flexWrap: 'wrap',
+                width: '100%',
+                padding: '5px 0',
+                marginTop: '10px' // 🔥 Ensures separation from text
+            });
+    
+            const warningText = document.createElement('span');
+            warningText.classList.add('fakezero-warning-text');
+            warningText.textContent = '⚠ Warning: This content may contain false information.';
+            Object.assign(warningText.style, {
+                color: 'red',
+                fontWeight: 'bold',
+                backgroundColor: '#ffefef',
+                padding: '5px',
+                borderRadius: '5px',
+                flex: '1'
+            });
+    
             const icon = document.createElement('div');
-            icon.id = 'debug-warning-icon';
-            icon.style.width = '30px';
-            icon.style.height = '30px';
-            icon.style.backgroundColor = 'red';
-            icon.style.position = 'absolute';
-            icon.style.zIndex = '9999';
-
-            icon.style.top = '0px';
-            icon.style.right = '10px';
-
-            icon.style.cursor = 'pointer';
-            icon.style.boxShadow = '0 2px 5px rgba(0,0,0,0.3)';
-
-            icon.innerText = '!';
-            icon.style.color = 'white';
-            icon.style.display = 'flex';
-            icon.style.alignItems = 'center';
-            icon.style.justifyContent = 'center';
-            icon.style.fontWeight = 'bold';
-
-            // Add click event to open the extension popup
-            // content.js (inside addWarningIcon)
+            icon.classList.add('fakezero-warning-icon');
+    
+            Object.assign(icon.style, {
+                width: '24px',
+                height: '24px',
+                backgroundColor: '#FF3B30',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'white',
+                fontSize: '16px',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                boxShadow: '0 2px 6px rgba(255, 59, 48, 0.5)',
+                transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+                zIndex: '10'
+            });
+    
+            icon.innerHTML = '&#9888;';
+    
+            warningContainer.appendChild(icon);
+            warningContainer.appendChild(warningText);
+    
+            // Insert warning after the post (separating it from text)
+            post.parentNode.insertBefore(warningContainer, post.nextSibling);
+    
+            console.log('Warning icon added below post, separate from text.');
             icon.addEventListener('click', (event) => {
                 event.stopPropagation();
                 try {
@@ -248,40 +293,61 @@ class FakeNewsDetector {
                 }
             });
 
-
-          
-            post.style.position = 'relative';
-
-        
-            post.appendChild(icon);
-            console.log('Clickable warning icon added successfully');
+            
         } catch (error) {
             console.error('Error adding warning icon:', error);
         }
     }
 
 
+
     handleExtensionStateUpdate(request) {
         console.log('Handling extension state update:', request.isActive);
         this.extensionEnabled = request.isActive;
         if (this.extensionEnabled) {
-            console.log('Enabling extension, initializing...');
-            this.setupObservers();
-            this.scanInitialPosts();
+            console.log('Extension activated, resetting state and re-scanning posts...');
+            this.processedPosts = new WeakSet();  // 🔥 Reset processed posts
+            this.scanInitialPosts();   // 🔥 Reprocess all posts and restore warnings
         } else {
-            console.log('Disabling extension, removing all icons...');
-            this.teardownObservers();
-            this.removeAllIcons();
+            console.log('Extension deactivated, removing warnings...');
+            this.removeAllWarnings();
         }
     }
 
-    removeAllIcons() {
+
+    removeAllWarnings() {
         document.querySelectorAll('.fakezero-warning-icon').forEach(icon => icon.remove());
+        document.querySelectorAll('.fakezero-warning-container').forEach(container => container.remove());
+        console.log('All warning icons removed, text remains.');
     }
+    
 
     async checkFakeNews(content) {
        
     }
 }
+
+// 🔥 Listen for storage changes to reactivate automatically
+chrome.storage.onChanged.addListener((changes, area) => {
+    if (area === 'local' && changes.isActive) {
+        console.log(`Extension state changed: ${changes.isActive.newValue}`);
+        this.handleExtensionStateUpdate({ isActive: changes.isActive.newValue });
+    }
+});
+
+
+// Add animation for a glowing effect
+const styleSheet = document.createElement("style");
+styleSheet.innerHTML = `
+    @keyframes pulse-glow {
+        0% {
+            box-shadow: 0 2px 6px rgba(255, 59, 48, 0.4);
+        }
+        100% {
+            box-shadow: 0 4px 12px rgba(255, 59, 48, 0.7);
+        }
+    }
+`;
+document.head.appendChild(styleSheet);
 
 new FakeNewsDetector();

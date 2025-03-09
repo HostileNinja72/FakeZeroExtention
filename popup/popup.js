@@ -8,11 +8,10 @@ class FakeZeroPopup {
     }
 
     initializeElements() {
-        console.debug('[FakeZero] Initializing UI elements');
         this.elements = {
-            toggleExtensionBtn: document.getElementById('toggleExtension'),
-            fakeNewsCounter: document.getElementById('fakeNewsCounter'),
-            statusIndicator: document.getElementById('statusIndicator')
+            toggleSwitch: document.getElementById('toggleSwitch'),
+            statusIndicator: document.getElementById('statusIndicator'),
+            fakeNewsCounter: document.getElementById('fakeNewsCounter') // 🔥 Added for displaying count
         };
     }
 
@@ -42,8 +41,7 @@ class FakeZeroPopup {
     }
 
     setupEventListeners() {
-        console.debug('[FakeZero] Setting up event listeners');
-        this.elements.toggleExtensionBtn.addEventListener('click', () => this.toggleExtension());
+        this.elements.toggleSwitch.addEventListener('change', () => this.toggleExtension());
     }
 
     
@@ -97,19 +95,11 @@ class FakeZeroPopup {
     }
 
     updateUI() {
-        console.debug('[FakeZero] Updating UI');
-        this.elements.fakeNewsCounter.textContent = this.state.fakeNewsCount;
-        this.elements.fakeNewsCounter.classList.add('counter-update');
-        setTimeout(() => {
-            this.elements.fakeNewsCounter.classList.remove('counter-update');
-        }, 300);
-
-        this.elements.toggleExtensionBtn.setAttribute('aria-pressed', this.state.isActive);
-        this.elements.toggleExtensionBtn.querySelector('.toggle-state').textContent =
-            this.state.isActive ? 'Inactive' : 'Active';
-
+        this.elements.toggleSwitch.checked = this.state.isActive;
         this.elements.statusIndicator.style.backgroundColor = this.state.isActive ? '#4CAF50' : '#FF5722';
+        this.elements.fakeNewsCounter.textContent = `${this.state.fakeNewsCount}`; // 🔥 Updates count display
     }
+    
 
     updateStatus(message, statusType = 'info') {
         console.log(`[FakeZero] Status update: ${message} (${statusType})`);

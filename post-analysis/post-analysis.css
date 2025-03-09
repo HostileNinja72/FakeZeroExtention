@@ -130,3 +130,13 @@ body {
     font-weight: bold;
     margin-right: 0.5rem;
 }
+
+@keyframes pulse {
+    0% { opacity: 0.3; }
+    50% { opacity: 1; }
+    100% { opacity: 0.3; }
+}
+
+.checking-animation {
+    animation: pulse 1.5s infinite ease-in-out;
+}
