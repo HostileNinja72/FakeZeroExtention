@@ -13,6 +13,7 @@ class FakeZeroPostAnalysis {
             platform: document.getElementById('platform'),
             sentimentScore: document.getElementById('sentiment-score'),
             sourcesCheck: document.getElementById('sources-check'),
+            fakeScore: document.getElementById('fakeScore'),
             closeBtn: document.querySelector('.close-btn')
         };
     }
@@ -31,10 +32,28 @@ class FakeZeroPostAnalysis {
             this.elements.postContent.textContent = event.data.content || 'No content available';
             this.elements.platform.textContent = event.data.platform || 'Unknown platform';
 
+            // Simulate fake score probability calculation
+            this.updateFakeScore();
+
             // Placeholder analysis updates
             this.elements.sentimentScore.textContent = 'Analysis pending...';
             this.elements.sourcesCheck.innerHTML = '<li>Source verification in progress</li>';
         });
+    }
+
+    updateFakeScore() {
+        // Generate a random probability for fake news (between 10% - 90%)
+        const probability = Math.floor(Math.random() * 81) + 10;
+        this.elements.fakeScore.textContent = `${probability}%`;
+
+        // Change color based on risk level
+        if (probability > 70) {
+            this.elements.fakeScore.style.color = 'red';
+        } else if (probability > 40) {
+            this.elements.fakeScore.style.color = 'orange';
+        } else {
+            this.elements.fakeScore.style.color = 'green';
+        }
     }
 
     setupCloseButton() {
@@ -51,3 +70,4 @@ console.log('[FakeZero] Initializing post-analysis script');
 document.addEventListener('DOMContentLoaded', () => {
     new FakeZeroPostAnalysis();
 });
+    

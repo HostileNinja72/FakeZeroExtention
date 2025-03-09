@@ -92,23 +92,27 @@ body {
     transition: all 0.3s ease-in-out;
 }
 
-/* LOADING STATE */
-.loading {
-    background: linear-gradient(to right, #f5f5f5 0%, #e0e0e0 50%, #f5f5f5 100%);
-    background-size: 200% 100%;
-    animation: shimmer 1.5s infinite linear;
-    color: transparent;
-    user-select: none;
+/* COUNTER CARD (FAKE SCORE) */
+.counter-card {
+    background: var(--light-bg);
+    border: 1px solid rgba(234, 59, 21, 0.15);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    text-align: center;
 }
 
-/* LOADING ELEMENTS */
-.loading-bar {
-    height: 10px;
+
+
+.counter-value {
+    color: var(--primary-red);
+    font-size: 2rem;
+    font-weight: 700;
+    transition: transform 0.3s ease;
+    display: flex;
+    justify-content: center;
+    align-items: center;
     width: 100%;
-    background: linear-gradient(90deg, rgba(200, 200, 200, 0.3), rgba(220, 220, 220, 0.6), rgba(200, 200, 200, 0.3));
-    background-size: 200% 100%;
-    animation: shimmer 1.5s infinite linear;
-    margin-top: 0.5rem;
+    min-height: 60px;
 }
 
 /* LIST STYLE */

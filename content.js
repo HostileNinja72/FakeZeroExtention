@@ -32,7 +32,8 @@ class FakeNewsDetector {
             config.selectors = {
                 post: 'div[data-ad-comet-preview="message"]',
                 adMarker: '[aria-label="Sponsored"]',
-                content: 'div.xdj266r'
+                content: 'div.xdj266r',
+                externalLink: 'a[href][role="link"]' 
             };
             config.isFacebook = true;
         } else if (hostname.includes('instagram.com')) {
@@ -154,6 +155,22 @@ class FakeNewsDetector {
         });
     }
 
+    extractLinksFromPost(postElement) {
+        const links = new Set();
+        const anchorElements = postElement.querySelectorAll('a');
+
+        anchorElements.forEach(anchor => {
+            const url = anchor.href;
+            if (url && !links.has(url)) {
+                links.add(url);
+            }
+        });
+
+        if (links.size > 0) {
+            console.log('[FakeZero] Extracted links from post:', Array.from(links));
+        }
+    }
+
     extractFullTextFromPost(postElement) {
         let extractedText = new Set(); 
         let textElements;
@@ -195,6 +212,8 @@ class FakeNewsDetector {
         //     }
         // }
 
+        this.extractLinksFromPost(post); 
+
         this.addWarningIcon(post);
         this.processedPosts.add(post);
 
@@ -229,16 +248,11 @@ class FakeNewsDetector {
             icon.style.alignItems = 'center';
             icon.style.justifyContent = 'center';
             icon.style.fontWeight = 'bold';
-
-            // Add click event to open the extension popup
-            // content.js (inside addWarningIcon)
             icon.addEventListener('click', (event) => {
                 event.stopPropagation();
                 try {
-                    // Instruct the background script to switch to post-analysis.html
                     chrome.runtime.sendMessage({ action: 'openAnalysisPopup' });
 
-                    // Tiny animation
                     icon.style.transform = 'scale(1.1)';
                     setTimeout(() => {
                         icon.style.transform = 'scale(1)';

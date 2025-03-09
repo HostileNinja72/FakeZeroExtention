@@ -24,7 +24,6 @@
         "storage",
         "activeTab",
         "scripting",
-        "messaging",
         "tabs"
     ],
     "host_permissions": [
