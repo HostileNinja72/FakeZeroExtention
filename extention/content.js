@@ -327,8 +327,38 @@ class FakeNewsDetector {
     
 
     async checkFakeNews(content) {
-       
+
+        const prompt = `Decide if the following social media post is likely fake news or not. Respond with "Fake" or "Real" only.\n\nPost: "${content}"`;
+
+        try {
+            const response = await fetch('https://api.openai.com/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${OPENAI_API_KEY}`
+                },
+                body: JSON.stringify({
+                    model: 'gpt-4o',
+                    messages: [
+                        { role: 'system', content: 'You are an expert fake news detector. Respond only with "Fake" or "Real".' },
+                        { role: 'user', content: prompt }
+                    ],
+                    temperature: 0.2,
+                    max_tokens: 10
+                })
+            });
+
+            const data = await response.json();
+            const result = data.choices[0].message.content.trim();
+
+            console.log(`[FakeZero] OpenAI detected: ${result}`);
+            return result.toLowerCase() === 'fake';
+        } catch (error) {
+            console.error('[FakeZero] Error contacting OpenAI:', error);
+            return false; // If API fails, assume post is not fake to avoid false alerts
+        }
     }
+
 }
 
 // 🔥 Listen for storage changes to reactivate automatically

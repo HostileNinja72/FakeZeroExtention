@@ -3,23 +3,21 @@
     "name": "Fake News Detector",
     "version": "1.1",
     "description": "Detects and flags fake news on social media.",
-    
     "web_accessible_resources": [
-            {
-                "resources": [
-                    "post-analysis/post-analysis.html",
-                    "post-analysis/post-analysis.css",
-                    "post-analysis/post-analysis.js",
-                    "icon.png"
-                ],
-                "matches": [
-                    "https://*.facebook.com/*",
-                    "https://*.instagram.com/*",
-                    "https://*.twitter.com/*"
-                ]
-            }
+        {
+            "resources": [
+                "post-analysis/post-analysis.html",
+                "post-analysis/post-analysis.css",
+                "post-analysis/post-analysis.js",
+                "icon.png"
+            ],
+            "matches": [
+                "https://*.facebook.com/*",
+                "https://*.instagram.com/*",
+                "https://*.twitter.com/*"
+            ]
+        }
     ],
-    
     "permissions": [
         "storage",
         "activeTab",
@@ -30,7 +28,8 @@
     "host_permissions": [
         "https://*.facebook.com/*",
         "https://*.instagram.com/*",
-        "https://*.twitter.com/*"
+        "https://*.twitter.com/*",
+        "https://libretranslate.de/*"
     ],
     "background": {
         "service_worker": "background.js"
@@ -43,6 +42,7 @@
                 "https://*.twitter.com/*"
             ],
             "js": [
+                "config.js",
                 "content.js"
             ]
         }
