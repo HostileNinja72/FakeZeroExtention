@@ -123,7 +123,7 @@ class FakeNewsDetector {
         const posts = [];
         mutation.addedNodes.forEach(node => {
             if (node.nodeType === Node.ELEMENT_NODE) {
-                
+
                 if (this.platformConfig.isFacebook) {
                     const fbPost = node.matches(this.platformConfig.selectors.post)
                         ? node
@@ -162,22 +162,22 @@ class FakeNewsDetector {
 
 
     extractFullTextFromPost(postElement) {
-        let extractedText = new Set(); 
+        let extractedText = new Set();
         let textElements;
         if (this.platformConfig.isTwitter) {
 
             textElements = postElement.querySelectorAll(this.platformConfig.selectors.content);
         } else {
-            
+
             textElements = postElement.querySelectorAll('*');
         }
 
         textElements.forEach(element => {
-        
+
             if (element.tagName.toLowerCase() !== 'img' && element.getAttribute('role') !== 'button') {
                 const textContent = element.textContent.trim();
                 if (textContent && !extractedText.has(textContent)) {
-                    extractedText.add(textContent); 
+                    extractedText.add(textContent);
                 }
             }
         });
@@ -187,35 +187,52 @@ class FakeNewsDetector {
 
     async processPost(post, force = false) {
         if (!this.extensionEnabled) return;
-    
-        let content = this.extractFullTextFromPost(post);
+
+        // Skip if the post is already processed and not forced
+        if (this.processedPosts.has(post) && !force) {
+            console.log('[FakeZero] Post already processed, skipping...');
+            return;
+        }
+
+        const content = this.extractFullTextFromPost(post);
         if (!content) return;
-    
+
         console.log('[FakeZero] Extracted post content:\n', content);
-    
-        // Get stored processed posts and count
-        chrome.storage.local.get(['processedPosts', 'fakeNewsCount'], (result) => {
-            let processedPosts = result.processedPosts || {}; // Store processed posts as an object
-            let fakeNewsCount = result.fakeNewsCount || 0;
-    
-            // Check if this post has already been counted
-            if (!processedPosts[content]) { 
-                // If post is new, increase count
-                fakeNewsCount += 1;
-                processedPosts[content] = true; // Mark post as processed
-    
-                chrome.storage.local.set({ fakeNewsCount, processedPosts }, () => {
-                    console.log(`Updated Fake News Count: ${fakeNewsCount}`);
-                });
-            } else {
-                console.log('This post has already been processed, skipping...');
-            }
-        });
-    
-        this.addWarningIcon(post);
+
+        const wordCount = content.split(/\s+/).filter(word => word).length;
+        console.log(`[FakeZero] Word count: ${wordCount}`);
+
+        // 🔸 Skip analysis for short posts
+        if (wordCount < 9) {
+            console.log('[FakeZero] Skipping analysis: post too short.');
+            return;
+        }
+
+        // ✅ Proceed with analysis
+        const isFake = await this.checkFakeNews(content);
+
+        if (isFake) {
+            chrome.storage.local.get(['processedPosts', 'fakeNewsCount'], (result) => {
+                let processedPosts = result.processedPosts || {};
+                let fakeNewsCount = result.fakeNewsCount || 0;
+
+                if (!processedPosts[content]) {
+                    fakeNewsCount += 1;
+                    processedPosts[content] = true;
+
+                    chrome.storage.local.set({ fakeNewsCount, processedPosts }, () => {
+                        console.log(`Updated Fake News Count: ${fakeNewsCount}`);
+                    });
+                } else {
+                    console.log('This fake post already processed');
+                }
+            });
+
+            this.addWarningIcon(post);
+        }
+
         this.processedPosts.add(post);
     }
-    
 
     addWarningIcon(post) {
         try {
@@ -224,11 +241,11 @@ class FakeNewsDetector {
                 console.log('Warning already added to this post, skipping...');
                 return; // Exit function if warning exists
             }
-    
+
             // Create warning container
             const warningContainer = document.createElement('div');
             warningContainer.classList.add('fakezero-warning-container');
-    
+
             Object.assign(warningContainer.style, {
                 display: 'flex',
                 alignItems: 'center',
@@ -238,7 +255,7 @@ class FakeNewsDetector {
                 padding: '5px 0',
                 marginTop: '10px' // 🔥 Ensures separation from text
             });
-    
+
             const warningText = document.createElement('span');
             warningText.classList.add('fakezero-warning-text');
             warningText.textContent = '⚠ Warning: This content may contain false information.';
@@ -250,10 +267,10 @@ class FakeNewsDetector {
                 borderRadius: '5px',
                 flex: '1'
             });
-    
+
             const icon = document.createElement('div');
             icon.classList.add('fakezero-warning-icon');
-    
+
             Object.assign(icon.style, {
                 width: '24px',
                 height: '24px',
@@ -270,23 +287,23 @@ class FakeNewsDetector {
                 transition: 'transform 0.2s ease, box-shadow 0.2s ease',
                 zIndex: '10'
             });
-    
+
             icon.innerHTML = '&#9888;';
-    
+
             warningContainer.appendChild(icon);
             warningContainer.appendChild(warningText);
-    
+
             // Insert warning after the post
             post.appendChild(warningContainer);
-    
+
             console.log('Warning icon added below post.');
-    
+
             // Handle click event to open analysis
             icon.addEventListener('click', (event) => {
                 event.stopPropagation();
                 try {
                     chrome.runtime.sendMessage({ action: 'openAnalysisPopup' });
-    
+
                     // Tiny animation
                     icon.style.transform = 'scale(1.1)';
                     setTimeout(() => {
@@ -296,12 +313,12 @@ class FakeNewsDetector {
                     console.error('Error opening extension:', error);
                 }
             });
-    
+
         } catch (error) {
             console.error('Error adding warning icon:', error);
         }
     }
-    
+
 
 
 
@@ -324,7 +341,7 @@ class FakeNewsDetector {
         document.querySelectorAll('.fakezero-warning-container').forEach(container => container.remove());
         console.log('All warning icons removed, text remains.');
     }
-    
+
 
     async checkFakeNews(content) {
 
@@ -385,3 +402,4 @@ styleSheet.innerHTML = `
 document.head.appendChild(styleSheet);
 
 new FakeNewsDetector();
+
