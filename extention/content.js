@@ -6,6 +6,7 @@ class FakeNewsDetector {
         this.fakeNewsCount = 0; // 🔥 Counter for detected fake news
         this.platformConfig = this.detectPlatform();
         this.initialize();
+        
     }
 
 
@@ -299,16 +300,20 @@ class FakeNewsDetector {
             console.log('Warning icon added below post.');
 
             // Handle click event to open analysis
+          
             icon.addEventListener('click', (event) => {
+                console.log('ICON CLICKED'); 
                 event.stopPropagation();
                 try {
-                    chrome.runtime.sendMessage({ action: 'openAnalysisPopup' });
+                    // Send the full post content to the analysis popup
+                    chrome.runtime.sendMessage({
+                        action: 'openAnalysisPopup',
+                        content: this.extractFullTextFromPost(post),
+                        platform: this.platformConfig.isFacebook ? 'Facebook' :
+                            this.platformConfig.isInstagram ? 'Instagram' : 'Twitter'
+                    });
 
-                    // Tiny animation
-                    icon.style.transform = 'scale(1.1)';
-                    setTimeout(() => {
-                        icon.style.transform = 'scale(1)';
-                    }, 200);
+                    // Animation code remains the same
                 } catch (error) {
                     console.error('Error opening extension:', error);
                 }

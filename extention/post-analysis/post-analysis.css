@@ -140,3 +140,60 @@ body {
 .checking-animation {
     animation: pulse 1.5s infinite ease-in-out;
 }
+
+/* Sentiment Meter */
+.sentiment-meter {
+    height: 8px;
+    border-radius: 4px;
+    margin-top: 0.5rem;
+    background: #eee;
+    position: relative;
+    overflow: hidden;
+}
+
+.sentiment-meter::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: var(--sentiment-width);
+    background: var(--sentiment-color);
+    transition: all 0.5s ease;
+}
+
+.sentiment-meter.negative::after {
+    --sentiment-color: #EA3B15;
+    --sentiment-width: 90%;
+}
+
+.sentiment-meter.neutral::after {
+    --sentiment-color: #FFC107;
+    --sentiment-width: 50%;
+}
+
+.sentiment-meter.positive::after {
+    --sentiment-color: #4CAF50;
+    --sentiment-width: 30%;
+}
+
+.sentiment-label {
+    font-weight: 600;
+    text-transform: capitalize;
+}
+
+/* Fake News Type List */
+.source-list li {
+    padding: 0.5rem;
+    background: #fff;
+    margin-bottom: 0.25rem;
+    border-left: 3px solid var(--primary-red);
+}
+
+.reason-text {
+    margin-top: 1rem;
+    padding: 1rem;
+    background: #fff8f7;
+    border-radius: 4px;
+    font-size: 0.9em;
+}

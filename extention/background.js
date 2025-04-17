@@ -20,14 +20,22 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.action === 'openAnalysisPopup') {
-        // 1) Switch the extension popup to "post-analysis.html"
+        console.debug('[FakeZero] Switching popup to post-analysis...');
+
+        // 1. Set post-analysis popup
         chrome.action.setPopup({ popup: 'post-analysis/post-analysis.html' }, () => {
-            // 2) Open the extension popup
+            // 2. Open it
             chrome.action.openPopup(() => {
-                // 3) Once opened, revert back to the default "popup.html"
-                chrome.action.setPopup({ popup: 'popup/popup.html' });
+                console.debug('[FakeZero] Popup opened');
+
+                // 3. Wait briefly, then revert popup back to default
+                setTimeout(() => {
+                    chrome.action.setPopup({ popup: 'popup/popup.html' });
+                    console.debug('[FakeZero] Popup reverted to default');
+                }, 3000); // adjust timing if needed
             });
         });
     }
 });
+
 
